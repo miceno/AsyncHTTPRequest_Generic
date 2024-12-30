@@ -1683,7 +1683,7 @@ bool  AsyncHTTPRequest::_collectHeaders()
   // Loop to parse off each header line. Drop out and return false if no \r\n (incomplete)
   do
   {
-    String headerLine = _response->readStringUntil("\r\n");
+    String headerLine = _response->readStringUntil("\n");
 
     // If no line, return false.
     if ( ! headerLine.length())
@@ -1692,7 +1692,7 @@ bool  AsyncHTTPRequest::_collectHeaders()
     }
 
     // If empty line, all headers are in, advance readyState.
-    if (headerLine.length() == 2)
+    if (headerLine.length() <= 2)
     {
       _setReadyState(readyStateHdrsRecvd);
     }
