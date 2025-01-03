@@ -64,6 +64,12 @@
 
 ////////////////////////////////////////
 
+#if !defined(TOLERANT_APPLICATIONS)
+	// Default is false
+	#define TOLERANT_APPLICATIONS						false
+#endif
+////////////////////////////////////////
+
 #if !defined(NOT_SEND_HEADER_AFTER_CONNECTED)
 	// Default is false
 	#define NOT_SEND_HEADER_AFTER_CONNECTED				false

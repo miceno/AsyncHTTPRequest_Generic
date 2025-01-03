@@ -130,6 +130,7 @@ Please have a look at [HOWTO Fix `Multiple Definitions` Linker Error](#howto-fix
 4. Single String response for short (<~5K) responses (heap permitting).
 5. Optional onData callback.
 6. Optional onReadyStatechange callback.
+7. Optional message parsing robustness configuration (header lines are not CRLF but LF).
 
 ### Principles of operation
 
@@ -488,6 +489,32 @@ https://github.com/khoih-prog/AsyncHTTPRequest_Generic/blob/ce452fb60f63c14b1deb
 |VCC|<--->|+3.3V|
 
 
+### HOWTO deal with non-HTTP compliant servers
+
+Not all HTTP servers follow the HTTP protocol standard that requires headers to be CR+LF terminated.
+Some servers do not send CRLF at the end of lines but just LF, some others produce a mix of headers ending in CRLF or LF.
+
+The response from such servers is not supported by this library, and thus the library fails to product a reliable response.
+
+HTTP standard allows for such behaviour (see [Message Parsing Robustness](https://datatracker.ietf.org/doc/html/rfc7230#section-3.5)) and recommends reading lines till the LF and discard any CR.
+
+In order to allow for it, use `TOLERANT_APPLICATIONS` flag:
+
+```cpp
+// Uncomment for certain HTTP server to optimize 
+#define TOLERANT_APPLICATIONS true 
+
+// Level from 0-4
+#define ASYNC_HTTP_DEBUG_PORT     Serial
+#define _ASYNC_HTTP_LOGLEVEL_     4
+#define DEFAULT_RX_TIMEOUT 10
+
+// Uncomment for certain HTTP site to optimize
+// #define NOT_SEND_HEADER_AFTER_CONNECTED        true
+
+#include <AsyncHTTPRequest_Generic.h>
+...
+```
 ---
 ---
 

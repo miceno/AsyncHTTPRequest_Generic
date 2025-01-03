@@ -513,6 +513,9 @@ bool AsyncHTTPRequest::debug()
 bool  AsyncHTTPRequest::open(const char* method, const char* URL)
 {
   AHTTP_LOGDEBUG3(F("open("), method, F(", url ="), URL);
+#if TOLERANT_APPLICATIONS
+  AHTTP_LOGDEBUG(F("Tolerant applications flag activated"));
+#endif
 
   if (_readyState != readyStateUnsent && _readyState != readyStateDone)
   {
@@ -1683,7 +1686,11 @@ bool  AsyncHTTPRequest::_collectHeaders()
   // Loop to parse off each header line. Drop out and return false if no \r\n (incomplete)
   do
   {
+#if TOLERANT_APPLICATIONS
+    String headerLine = _response->readStringUntil("\n");
+#else
     String headerLine = _response->readStringUntil("\r\n");
+#endif
 
     // If no line, return false.
     if ( ! headerLine.length())
@@ -1692,7 +1699,11 @@ bool  AsyncHTTPRequest::_collectHeaders()
     }
 
     // If empty line, all headers are in, advance readyState.
+#if TOLERANT_APPLICATIONS
+    if (headerLine.length() <= 2)
+#else
     if (headerLine.length() == 2)
+#endif
     {
       _setReadyState(readyStateHdrsRecvd);
     }
