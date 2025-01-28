@@ -1459,19 +1459,22 @@ void  AsyncHTTPRequest::_processChunks()
   {
     size_t _chunkRemaining = _contentLength - _contentRead - _response->available();
     _chunkRemaining -= _response->write(_chunks, _chunkRemaining);
+    // AHTTP_LOGDEBUG1("chk: ", _chunkRemaining);
 
     if (_chunks->indexOf("\r\n") == -1)
-    {
+   {
       return;
     }
 
     String chunkHeader = _chunks->readStringUntil("\r\n");
+    
 
     size_t chunkLength = strtol(chunkHeader.c_str(), nullptr, 16);
     _contentLength += chunkLength;
 
     if (chunkHeader == "0\r\n")
     {
+      // AHTTP_LOGDEBUG("chk: 0header");
       char* connectionHdr = respHeaderValue("connection");
 
       if (connectionHdr && (strcasecmp_P(connectionHdr, PSTR("close")) == 0))
@@ -1487,7 +1490,9 @@ void  AsyncHTTPRequest::_processChunks()
       return;
     }
   }
+  // AHTTP_LOGDEBUG("chk: end");
 }
+
 
 /*______________________________________________________________________________________________________________
 
@@ -1622,25 +1627,30 @@ void  AsyncHTTPRequest::_onData(void* Vbuf, size_t len)
 {
   MUTEX_LOCK_NR
 
+  // AHTTP_LOGDEBUG(F("_onData"));
   _lastActivity = millis();
 
   // Transfer data to xbuf
   if (_chunks)
   {
+    // AHTTP_LOGDEBUG(F("_chunk"));
     _chunks->write((uint8_t*)Vbuf, len);
 
     _processChunks();
   }
   else
   {
+    // AHTTP_LOGDEBUG(F("no _chunk"));
     _response->write((uint8_t*)Vbuf, len);
   }
 
   // if headers not complete, collect them. If still not complete, just return.
   if (_readyState == readyStateOpened)
   {
+    // AHTTP_LOGDEBUG(F("collect headers"));
     if ( ! _collectHeaders())
     {
+      // AHTTP_LOGDEBUG(F("no headers"));
       _AHTTP_unlock;
 
       return;
@@ -1660,6 +1670,7 @@ void  AsyncHTTPRequest::_onData(void* Vbuf, size_t len)
 
     if (connectionHdr && (strcasecmp_P(connectionHdr, PSTR("close")) == 0))
     {
+      // AHTTP_LOGDEBUG(F("client close "));
       _client->close();
     }
 
@@ -1691,10 +1702,12 @@ bool  AsyncHTTPRequest::_collectHeaders()
 #else
     String headerLine = _response->readStringUntil("\r\n");
 #endif
+    // AHTTP_LOGDEBUG2(F("hdr line: |"), headerLine.c_str(), "|");
 
     // If no line, return false.
     if ( ! headerLine.length())
     {
+      // AHTTP_LOGDEBUG(F("hdr noline"));
       return false;
     }
 
@@ -1705,17 +1718,20 @@ bool  AsyncHTTPRequest::_collectHeaders()
     if (headerLine.length() == 2)
 #endif
     {
+      // AHTTP_LOGDEBUG("hdr recvd");
       _setReadyState(readyStateHdrsRecvd);
     }
     // If line is HTTP header, capture HTTPcode.
     else if (headerLine.substring(0, 7) == "HTTP/1.")
     {
       _HTTPcode = headerLine.substring(9, headerLine.indexOf(' ', 9)).toInt();
+      // AHTTP_LOGDEBUG1("hdr code:", _HTTPcode);
     }
     // Ordinary header, add to header list.
     else
     {
       int colon = headerLine.indexOf(':');
+      // AHTTP_LOGDEBUG1("hdr colon:", colon);
 
       if (colon != -1)
       {
@@ -1995,6 +2011,8 @@ String AsyncHTTPRequest::headers()
 AsyncHTTPRequest::header*  AsyncHTTPRequest::_addHeader(const char* name, const char* value)
 {
   MUTEX_LOCK(nullptr)
+
+  // AHTTP_LOGDEBUG3(F("hdr: |"), name, "|=|", value);
 
   header* hdr = (header*) &_headers;
 
